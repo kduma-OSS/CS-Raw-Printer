@@ -35,6 +35,11 @@ namespace RawPrinter
             _handlePrinter = IntPtr.Zero;
         }
 
+        public RawPrinter(string printerName) : this()
+        {
+            PrinterName = printerName;
+        }
+
         public bool Open(string documentName)
         {
             // see if printer is already open
@@ -79,16 +84,19 @@ namespace RawPrinter
             return true;
         }
 
-        public bool Print(string outputstring)
+        public bool SendData(string data)
         {
             if (_handlePrinter == IntPtr.Zero)
                 return false;
 
-            var buf = Marshal.StringToCoTaskMemAnsi(outputstring);
-            var ok = WritePrinter(_handlePrinter, buf, outputstring.Length, out var done);
+            var buf = Marshal.StringToCoTaskMemAnsi(data);
+            var ok = WritePrinter(_handlePrinter, buf, data.Length, out var done);
             Marshal.FreeCoTaskMem(buf);
 
             return ok;
         }
+
+        public bool SendData(char data) => SendData(data.ToString());
+        public bool SendData(int data) => SendData(((char) data).ToString());
     }
 }
