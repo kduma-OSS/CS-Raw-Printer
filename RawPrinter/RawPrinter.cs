@@ -25,93 +25,70 @@ using System.Runtime.InteropServices;
 
 namespace RawPrinter
 {
-    public class RawPrinter
+    public partial class RawPrinter
     {
-        // Structure and API declarions:
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public class DOCINFOA
-        {
-            [MarshalAs(UnmanagedType.LPStr)] public string pDocName;
-            [MarshalAs(UnmanagedType.LPStr)] public string pOutputFile;
-            [MarshalAs(UnmanagedType.LPStr)] public string pDataType;
-        }
-        [DllImport("winspool.Drv", EntryPoint = "OpenPrinterA", SetLastError = true, CharSet = CharSet.Ansi, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool OpenPrinter([MarshalAs(UnmanagedType.LPStr)] string szPrinter, out IntPtr hPrinter, IntPtr pd);
-
-        [DllImport("winspool.Drv", EntryPoint = "ClosePrinter", SetLastError = true, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool ClosePrinter(IntPtr hPrinter);
-
-        [DllImport("winspool.Drv", EntryPoint = "StartDocPrinterA", SetLastError = true, CharSet = CharSet.Ansi, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool StartDocPrinter(IntPtr hPrinter, Int32 level, [In, MarshalAs(UnmanagedType.LPStruct)] DOCINFOA di);
-
-        [DllImport("winspool.Drv", EntryPoint = "EndDocPrinter", SetLastError = true, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool EndDocPrinter(IntPtr hPrinter);
-
-        [DllImport("winspool.Drv", EntryPoint = "StartPagePrinter", SetLastError = true, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool StartPagePrinter(IntPtr hPrinter);
-
-        [DllImport("winspool.Drv", EntryPoint = "EndPagePrinter", SetLastError = true, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool EndPagePrinter(IntPtr hPrinter);
-
-        [DllImport("winspool.Drv", EntryPoint = "WritePrinter", SetLastError = true, ExactSpelling = true, CallingConvention = CallingConvention.StdCall)]
-        public static extern bool WritePrinter(IntPtr hPrinter, IntPtr pBytes, Int32 dwCount, out Int32 dwWritten);
-
-        /*=================================================*/
-
-        private IntPtr HandlePrinter;
+        private IntPtr _handlePrinter;
         public string PrinterName;
 
         public RawPrinter()
         {
-            HandlePrinter = IntPtr.Zero;
+            _handlePrinter = IntPtr.Zero;
         }
 
-        public bool Open(string DocName)
+        public bool Open(string documentName)
         {
             // see if printer is already open
-            if (HandlePrinter != IntPtr.Zero) return false;
+            if (_handlePrinter != IntPtr.Zero)
+                return false;
 
             // opens the printer
-            bool risp = OpenPrinter(PrinterName, out HandlePrinter, IntPtr.Zero);
-            if (risp == false) return false;
+            var risp = OpenPrinter(PrinterName, out _handlePrinter, IntPtr.Zero);
+            if (risp == false)
+                return false;
 
             // starts a print job
-            DOCINFOA MyDocInfo = new DOCINFOA();
-            MyDocInfo.pDocName = DocName;
-            MyDocInfo.pOutputFile = null;
-            MyDocInfo.pDataType = "RAW";
-
-            if (StartDocPrinter(HandlePrinter, 1, MyDocInfo))
+            var printJob = new DOCINFOA
             {
-                StartPagePrinter(HandlePrinter); //starts a page       
-                return true;
-            }
-            else return false;
+                pDocName = documentName,
+                pOutputFile = null,
+                pDataType = "RAW"
+            };
+
+            if (!StartDocPrinter(_handlePrinter, 1, printJob))
+                return false;
+
+            StartPagePrinter(_handlePrinter); //starts a page       
+            return true;
         }
 
         public bool Close()
         {
-            if (HandlePrinter == IntPtr.Zero) return false;
-            if (!EndPagePrinter(HandlePrinter)) return false;
-            if (!EndDocPrinter(HandlePrinter)) return false;
-            if (!ClosePrinter(HandlePrinter)) return false;
-            HandlePrinter = IntPtr.Zero;
+            if (_handlePrinter == IntPtr.Zero)
+                return false;
+
+            if (!EndPagePrinter(_handlePrinter))
+                return false;
+
+            if (!EndDocPrinter(_handlePrinter))
+                return false;
+
+            if (!ClosePrinter(_handlePrinter))
+                return false;
+
+            _handlePrinter = IntPtr.Zero;
             return true;
         }
 
         public bool Print(string outputstring)
         {
-            if (HandlePrinter == IntPtr.Zero) return false;
+            if (_handlePrinter == IntPtr.Zero)
+                return false;
 
-            IntPtr buf = Marshal.StringToCoTaskMemAnsi(outputstring);
-
-            Int32 done = 0;
-            bool ok = WritePrinter(HandlePrinter, buf, outputstring.Length, out done);
-
+            var buf = Marshal.StringToCoTaskMemAnsi(outputstring);
+            var ok = WritePrinter(_handlePrinter, buf, outputstring.Length, out var done);
             Marshal.FreeCoTaskMem(buf);
 
-            if (!ok) return false;
-            else return true;
+            return ok;
         }
     }
 }

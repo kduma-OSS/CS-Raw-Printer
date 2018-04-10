@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="RawPrinter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RawPrinter.Win32.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
