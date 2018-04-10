@@ -24,7 +24,7 @@ using System.Runtime.InteropServices;
 
 namespace RawPrinter
 {
-    public partial class RawPrinter
+    public partial class Printer
     {
         // Structure and API declarions:
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]

@@ -25,17 +25,17 @@ using System.Runtime.InteropServices;
 
 namespace RawPrinter
 {
-    public partial class RawPrinter
+    public partial class Printer
     {
         private IntPtr _handlePrinter;
         public string PrinterName;
 
-        public RawPrinter()
+        public Printer()
         {
             _handlePrinter = IntPtr.Zero;
         }
 
-        public RawPrinter(string printerName) : this()
+        public Printer(string printerName) : this()
         {
             PrinterName = printerName;
         }
